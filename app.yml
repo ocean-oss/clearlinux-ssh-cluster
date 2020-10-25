@@ -1,0 +1,49 @@
+---
+ocean:
+  version: "1"
+snapshots:
+  - name: os_image
+    registry: docker_hub
+    image: buvoli/clearlinux-ssh-cluster
+    tag: latest
+steps:
+- engines:
+  - name: main
+    vars:
+    - name: ssh_port
+      value: "{% reserve_public_port %}"
+    - name: vnc_port
+      value: "{% reserve_public_port %}"
+    - name: vnc_password
+      value: "password"
+    orchestrator:
+      deployment_strategy: main_and_workers
+      snapshot_name: os_image
+      container:
+        runner:
+          modes:
+          - systemd
+        workdir: "/root"
+        user: 0
+        mounts:
+          engine: "/etc/ocean"
+          data_stores: "/home/{{ workspace.user.name }}/data"
+          ssh: "/home/{{ workspace.user.name }}/.ssh"
+        nodes:
+          main:
+            command: "/etc/ocean/scripts/start-main.sh"
+          worker:
+            command: "/etc/ocean/scripts/start-worker.sh"
+    ui:
+      buttons:
+        - node_target: main
+          label: "Start SSH"
+          url: "ssh://{{ workspace.user.name }}@{{ engines.main.ui.buttons.self.node.public_ip }}:{{ engines.main.vars.ssh_port }}"
+        - node_target: main
+          label: "Start Virtual Desktop"
+          url: "vnc://{{ engines.main.ui.buttons.self.node.public_ip }}:{{ engines.main.vars.vnc_port }}"
+      badges:
+        - node_target: main
+          label: "VNC Address: {{ engines.main.ui.badges.self.node.public_ip }}:{{ engines.main.vars.vnc_port }}"
+        - node_target: main
+          label: "SSH Address: {{ workspace.user.name }}@{{ engines.main.ui.badges.self.node.public_ip }}:{{ engines.main.vars.ssh_port }}"

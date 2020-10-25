@@ -1,0 +1,5 @@
+subsystem sftp /usr/libexec/sftp-server
+AllowTcpForwarding yes
+X11UseLocalhost yes
+X11DisplayOffset 10
+X11Forwarding yes
